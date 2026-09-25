@@ -1,0 +1,40 @@
+# Environments & Credentials
+.env
+.env.local
+.venv
+venv/
+env/
+ENV/
+
+# Python Cache & Databases
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+mededge.db
+*.sqlite3
+*.db
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Distribution & Build
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg

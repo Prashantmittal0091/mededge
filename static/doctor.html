@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Portal | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">Doctor Clinical Workstation</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <main class="container">
+    <div class="page-title-block">
+      <h1 class="page-title">Doctor Clinical Dashboard</h1>
+      <p class="page-desc">Review assigned patients, live ECG telemetry, AI clinical alerts, and issue prescriptions.</p>
+    </div>
+
+    <!-- Active Monitored Patient Vitals Overview -->
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Assigned Patient</span>
+          <div class="vital-value" style="font-size: 1.25rem;">Rajesh Sharma (P-1001)</div>
+          <span class="badge badge-normal">Under Active Telemetry</span>
+        </div>
+        <div class="vital-icon blue">👤</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Live Heart Rate (AD8232)</span>
+          <div class="vital-value" id="doc-hr" style="color: #DC2626;">72 BPM</div>
+          <span class="badge badge-normal">Normal Sinus Rhythm</span>
+        </div>
+        <div class="vital-icon red">♥</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Live Blood Oxygen (MAX30102)</span>
+          <div class="vital-value" id="doc-spo2" style="color: #0284C7;">98%</div>
+          <span class="badge badge-normal">Optimal Saturation</span>
+        </div>
+        <div class="vital-icon blue">O₂</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- AI Assisted Health Assessment Stream -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">AI-Assisted Health Assessment (Phi-3 Engine)</h3>
+          <span class="badge badge-normal">Zero-Cloud Local SLM</span>
+        </div>
+        <div id="doc-slm-panel">
+          <div class="alert-box">
+            <div class="alert-title">Normal Sinus Rhythm</div>
+            <div class="alert-desc">Patient vitals are within standard physiological reference ranges (HR: 60-100 BPM, SpO2: 95-100%). No immediate clinical intervention required.</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <a href="/telemetry" class="btn btn-primary" style="width: 100%;">Open Full ECG/PPG Waveform Monitor &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Add Medical Record & Notes Form -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Clinical Assessment & Prescription Entry</h3>
+        </div>
+        <form id="doc-notes-form">
+          <div class="form-group">
+            <label class="form-label">Patient</label>
+            <select class="form-control" id="doc-patient-id" required>
+              <option value="P-1001">Rajesh Sharma (P-1001)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clinical Diagnosis</label>
+            <input type="text" id="doc-diagnosis" class="form-control" placeholder="e.g. Essential Hypertension - Stable" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prescription / Medication Instructions</label>
+            <textarea id="doc-prescription" class="form-control" rows="2" placeholder="e.g. Tab. Amlodipine 5mg OD, Tab. Aspirin 75mg OD"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clinical Observations & Notes</label>
+            <textarea id="doc-notes" class="form-control" rows="2" placeholder="Patient vital trends stable via MedEdge IoT edge monitor."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Save Clinical Record</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Doctor Clinical Workstation</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const role = localStorage.getItem("mededge_role");
+      if (role !== "DOCTOR" && role !== "ADMIN") {
+        alert("Access Denied: Doctor privileges required.");
+        window.location.href = "/login";
+        return;
+      }
+      initDocWebSocket();
+    });
+
+    function initDocWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/telemetry`);
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        document.getElementById("doc-hr").innerText = `${data.heart_rate} BPM`;
+        document.getElementById("doc-spo2").innerText = `${data.spo2}%`;
+
+        if (data.slm_eval) {
+          const evalData = data.slm_eval;
+          const boxClass = evalData.severity === 'CRITICAL' ? 'critical' : (evalData.severity === 'WARNING' ? 'warning' : '');
+          document.getElementById("doc-slm-panel").innerHTML = `
+            <div class="alert-box ${boxClass}">
+              <div class="alert-title">${evalData.diagnosis} (${evalData.severity})</div>
+              <div class="alert-desc">${evalData.assessment}</div>
+              <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.5rem;">Engine: ${evalData.slm_model}</div>
+            </div>
+          `;
+        }
+      };
+    }
+
+    document.getElementById("doc-notes-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Clinical observation and prescription recorded successfully!");
+      document.getElementById("doc-diagnosis").value = "";
+      document.getElementById("doc-prescription").value = "";
+      document.getElementById("doc-notes").value = "";
+    });
+  </script>
+</body>
+</html>

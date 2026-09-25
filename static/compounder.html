@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy & Compounder Portal | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">Pharmacy & Compounder Workstation</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <main class="container">
+    <div class="page-title-block">
+      <h1 class="page-title">Medication Dispensing & Pharmacy Queue</h1>
+      <p class="page-desc">Process physician prescriptions and update medication fulfillment status for monitored patients.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Prescription & Medication Queue</h3>
+        <button class="btn btn-secondary btn-sm" onclick="fetchPrescriptions()">Refresh</button>
+      </div>
+
+      <div class="table-container">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Patient Name</th>
+              <th>Attending Doctor</th>
+              <th>Prescribed Medication & Dosage</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P-1001</strong></td>
+              <td>Rajesh Sharma</td>
+              <td>Dr. Ananya Sharma</td>
+              <td>Tab. Amlodipine 5mg (1-0-0), Tab. Aspirin 75mg (0-0-1)</td>
+              <td><span class="badge badge-warning">PENDING DISPENSING</span></td>
+              <td><button class="btn btn-primary btn-sm" onclick="dispenseMed(this)">Mark Dispensed</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Pharmacy & Compounder Portal</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const role = localStorage.getItem("mededge_role");
+      if (role !== "COMPOUNDER" && role !== "ADMIN") {
+        alert("Access Denied: Compounder privileges required.");
+        window.location.href = "/login";
+      }
+    });
+
+    function dispenseMed(btn) {
+      btn.parentElement.previousElementSibling.innerHTML = '<span class="badge badge-normal">DISPENSED</span>';
+      btn.innerText = "Completed";
+      btn.disabled = true;
+      btn.className = "btn btn-secondary btn-sm";
+    }
+  </script>
+</body>
+</html>

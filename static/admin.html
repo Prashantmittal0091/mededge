@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">System Administration Dashboard</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <!-- Sidebar & Main Content Layout -->
+  <div class="admin-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-link active" onclick="switchAdminTab('overview', this)">
+        <span>📊</span> System Overview
+      </div>
+      <div class="sidebar-link" onclick="switchAdminTab('users', this)">
+        <span>👥</span> User & Staff Directory
+      </div>
+      <div class="sidebar-link" onclick="switchAdminTab('patients', this)">
+        <span>🏥</span> Monitored Patients
+      </div>
+      <div class="sidebar-link" onclick="switchAdminTab('audit', this)">
+        <span>🛡️</span> Security & Audit Logs
+      </div>
+      <div class="sidebar-link" onclick="switchAdminTab('telemetry', this)">
+        <span>📈</span> Sensor Telemetry Data
+      </div>
+    </aside>
+
+    <!-- Main Admin Panel -->
+    <main class="admin-main">
+      <div class="page-title-block" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 class="page-title">Hospital System Control Panel</h1>
+          <p class="page-desc">Manage system users, patient records, staff accounts, and security logs.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddUserModal()">+ Add New User / Staff</button>
+      </div>
+
+      <!-- Tab 1: Overview Widgets -->
+      <div id="tab-overview" class="admin-tab-content">
+        <div class="grid-4" style="margin-bottom: 1.5rem;">
+          <div class="card vital-card">
+            <div>
+              <span class="vital-label">Total Users</span>
+              <div class="vital-value" id="stat-total-users">6</div>
+              <span class="badge badge-normal">Active System Users</span>
+            </div>
+            <div class="vital-icon blue">👥</div>
+          </div>
+
+          <div class="card vital-card">
+            <div>
+              <span class="vital-label">Monitored Patients</span>
+              <div class="vital-value" id="stat-total-patients">1</div>
+              <span class="badge badge-normal">Active Telemetry</span>
+            </div>
+            <div class="vital-icon red">🏥</div>
+          </div>
+
+          <div class="card vital-card">
+            <div>
+              <span class="vital-label">Medical Staff</span>
+              <div class="vital-value" id="stat-total-staff">4</div>
+              <span class="badge badge-normal">Doctors, Nurses, Staff</span>
+            </div>
+            <div class="vital-icon green">🩺</div>
+          </div>
+
+          <div class="card vital-card">
+            <div>
+              <span class="vital-label">Edge Node Status</span>
+              <div class="vital-value" style="font-size: 1.25rem; color: #059669;">ONLINE</div>
+              <span class="badge badge-normal">MAX30102 + AD8232</span>
+            </div>
+            <div class="vital-icon blue">⚡</div>
+          </div>
+        </div>
+
+        <!-- System Alerts Summary -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent System Alerts & Clinical Incidents</h3>
+            <button class="btn btn-secondary btn-sm" onclick="fetchAdminAlerts()">Refresh</button>
+          </div>
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Patient ID</th>
+                  <th>Severity</th>
+                  <th>Diagnosis / Anomaly</th>
+                  <th>Heart Rate</th>
+                  <th>SpO₂</th>
+                  <th>Clinical Assessment</th>
+                </tr>
+              </thead>
+              <tbody id="admin-alerts-tbody">
+                <tr><td colspan="7" style="text-align: center; color: #64748B;">Loading system alert records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: User Directory & Management -->
+      <div id="tab-users" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">System User & Staff Accounts</h3>
+            <input type="text" id="user-search-input" onkeyup="filterUsersTable()" class="form-control" placeholder="Search by name, email, or role..." style="width: 250px;">
+          </div>
+
+          <div class="table-container">
+            <table class="custom-table" id="users-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Created Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Monitored Patients -->
+      <div id="tab-patients" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Monitored Patient Directory</h3>
+          </div>
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Patient ID</th>
+                  <th>Name</th>
+                  <th>Age / Gender</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Latest Vitals</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="patients-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading patient directory...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Audit Logs -->
+      <div id="tab-audit" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Security & System Activity Audit Trail</h3>
+          </div>
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Timestamp</th>
+                  <th>User Email</th>
+                  <th>Role</th>
+                  <th>Action Activity</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tbody">
+                <tr><td colspan="5" style="text-align: center;">Loading audit logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Sensor Telemetry -->
+      <div id="tab-telemetry" class="admin-tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Real-Time Sensor Telemetry Quick Monitor</h3>
+            <a href="/telemetry" class="btn btn-primary btn-sm" target="_blank">Open Full Screen Waveform Monitor &rarr;</a>
+          </div>
+          <p style="font-size: 0.9rem; color: #475569; margin-bottom: 1rem;">
+            Direct WebSocket telemetry pipeline streaming live MAX30102 (Blood Oxygen) and AD8232 (Butterworth 3rd-order filtered ECG) data from edge hardware.
+          </p>
+          <div style="padding: 1.5rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; text-align: center;">
+            <p style="font-weight: 600; color: #1E3A8A;">Live Telemetry Stream Active (100ms sample interval)</p>
+            <p style="font-size: 0.85rem; color: #64748B;">Sub-second edge processing with zero cloud data transmission.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Add User Modal -->
+  <div id="add-user-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="card" style="width: 100%; max-width: 460px;">
+      <div class="card-header">
+        <h3 class="card-title">Create New System Account</h3>
+        <button onclick="closeAddUserModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <form id="create-user-form">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="modal-name" class="form-control" placeholder="e.g. Dr. Ramesh Gupta" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="modal-email" class="form-control" placeholder="e.g. ramesh@mededge.local" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="modal-username" class="form-control" placeholder="e.g. ramesh_gupta" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="modal-password" class="form-control" placeholder="Secure password" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">System Role</label>
+          <select id="modal-role" class="form-control" required>
+            <option value="DOCTOR">Doctor</option>
+            <option value="NURSE">Nurse</option>
+            <option value="COMPOUNDER">Compounder</option>
+            <option value="RECEPTIONIST">Receptionist</option>
+            <option value="ADMIN">Admin</option>
+            <option value="PATIENT">Patient</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="reset-pwd-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="card" style="width: 100%; max-width: 400px;">
+      <div class="card-header">
+        <h3 class="card-title">Reset User Password</h3>
+        <button onclick="closeResetPwdModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <form id="reset-pwd-form">
+        <input type="hidden" id="reset-user-id">
+        <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 0.75rem;" id="reset-user-desc">Set new password for user:</p>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" id="reset-new-password" class="form-control" placeholder="Enter new password" required>
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeResetPwdModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save New Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // Enforce Admin RBAC Guard
+    document.addEventListener("DOMContentLoaded", () => {
+      const role = localStorage.getItem("mededge_role");
+      if (role !== "ADMIN") {
+        alert("Access Denied: Admin privileges required.");
+        window.location.href = "/login";
+        return;
+      }
+      fetchAdminUsers();
+      fetchAdminAlerts();
+      fetchAdminPatients();
+      fetchAdminAuditLogs();
+    });
+
+    function switchAdminTab(tabId, element) {
+      document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tabId}`).style.display = 'block';
+      element.classList.add('active');
+    }
+
+    // Modal Helpers
+    function openAddUserModal() { document.getElementById("add-user-modal").style.display = "flex"; }
+    function closeAddUserModal() { document.getElementById("add-user-modal").style.display = "none"; }
+    function openResetPwdModal(id, email) {
+      document.getElementById("reset-user-id").value = id;
+      document.getElementById("reset-user-desc").innerText = `Set new password for ${email}:`;
+      document.getElementById("reset-pwd-modal").style.display = "flex";
+    }
+    function closeResetPwdModal() { document.getElementById("reset-pwd-modal").style.display = "none"; }
+
+    // Fetch Users
+    async function fetchAdminUsers() {
+      try {
+        const resp = await fetchApi("/api/admin/users");
+        if (resp.ok) {
+          const users = await resp.json();
+          document.getElementById("stat-total-users").innerText = users.length;
+          let staffCount = users.filter(u => u.role !== 'PATIENT' && u.role !== 'ADMIN').length;
+          document.getElementById("stat-total-staff").innerText = staffCount;
+
+          const tbody = document.getElementById("users-tbody");
+          tbody.innerHTML = users.map(u => `
+            <tr>
+              <td>${u.id}</td>
+              <td><strong>${u.name}</strong></td>
+              <td>${u.email}</td>
+              <td><span class="badge ${u.role === 'ADMIN' ? 'badge-critical' : 'badge-normal'}">${u.role}</span></td>
+              <td><span class="badge ${u.status === 'ACTIVE' ? 'badge-normal' : 'badge-warning'}">${u.status}</span></td>
+              <td>${u.created_at}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="openResetPwdModal(${u.id}, '${u.email}')">Reset Pwd</button>
+                <button class="btn ${u.status === 'ACTIVE' ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="toggleUserStatus(${u.id})">
+                  ${u.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                </button>
+              </td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    // Fetch Alerts
+    async function fetchAdminAlerts() {
+      try {
+        const resp = await fetchApi("/api/alerts");
+        if (resp.ok) {
+          const alerts = await resp.json();
+          const tbody = document.getElementById("admin-alerts-tbody");
+          if (alerts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No active alerts logged.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = alerts.map(a => `
+            <tr>
+              <td>${a.timestamp}</td>
+              <td><strong>${a.patient_id}</strong></td>
+              <td><span class="badge ${a.severity === 'CRITICAL' ? 'badge-critical' : (a.severity === 'WARNING' ? 'badge-warning' : 'badge-normal')}">${a.severity}</span></td>
+              <td><strong>${a.diagnosis}</strong></td>
+              <td>${a.heart_rate} BPM</td>
+              <td>${a.spo2}%</td>
+              <td style="font-size: 0.82rem;">${a.assessment}</td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    // Fetch Patients
+    async function fetchAdminPatients() {
+      try {
+        const resp = await fetchApi("/api/patients");
+        if (resp.ok) {
+          const patients = await resp.json();
+          document.getElementById("stat-total-patients").innerText = patients.length;
+          const tbody = document.getElementById("patients-tbody");
+          tbody.innerHTML = patients.map(p => `
+            <tr>
+              <td><strong>${p.patient_id}</strong></td>
+              <td>${p.name}</td>
+              <td>${p.age} Yrs / ${p.gender}</td>
+              <td>${p.phone}</td>
+              <td><span class="badge badge-normal">${p.status}</span></td>
+              <td>HR: ${p.latest_hr} BPM | SpO2: ${p.latest_spo2}%</td>
+              <td><a href="/telemetry" class="btn btn-primary btn-sm">View Telemetry</a></td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    // Fetch Audit Logs
+    async function fetchAdminAuditLogs() {
+      try {
+        const resp = await fetchApi("/api/admin/system-activity");
+        if (resp.ok) {
+          const logs = await resp.json();
+          const tbody = document.getElementById("audit-tbody");
+          tbody.innerHTML = logs.map(l => `
+            <tr>
+              <td>${l.id}</td>
+              <td>${l.timestamp}</td>
+              <td>${l.user_email}</td>
+              <td><span class="badge badge-normal">${l.user_role}</span></td>
+              <td>${l.action}</td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    // Create User Submit
+    document.getElementById("create-user-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("name", document.getElementById("modal-name").value);
+      formData.append("email", document.getElementById("modal-email").value);
+      formData.append("username", document.getElementById("modal-username").value);
+      formData.append("password", document.getElementById("modal-password").value);
+      formData.append("role", document.getElementById("modal-role").value);
+
+      const resp = await fetchApi("/api/admin/users", { method: "POST", body: formData });
+      if (resp.ok) {
+        closeAddUserModal();
+        fetchAdminUsers();
+        fetchAdminPatients();
+      } else {
+        const d = await resp.json();
+        alert(d.detail || "Error creating user.");
+      }
+    });
+
+    // Reset Password Submit
+    document.getElementById("reset-pwd-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("reset-user-id").value;
+      const newPwd = document.getElementById("reset-new-password").value;
+
+      const formData = new FormData();
+      formData.append("new_password", newPwd);
+
+      const resp = await fetchApi(`/api/admin/users/${userId}/reset-password`, { method: "POST", body: formData });
+      if (resp.ok) {
+        alert("Password updated successfully.");
+        closeResetPwdModal();
+      } else {
+        alert("Failed to reset password.");
+      }
+    });
+
+    // Toggle User Status
+    async function toggleUserStatus(userId) {
+      const resp = await fetchApi(`/api/admin/users/${userId}/toggle-status`, { method: "PUT" });
+      if (resp.ok) {
+        fetchAdminUsers();
+      }
+    }
+
+    // Table Filter
+    function filterUsersTable() {
+      const input = document.getElementById("user-search-input").value.toLowerCase();
+      const rows = document.querySelectorAll("#users-tbody tr");
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+  </script>
+</body>
+</html>

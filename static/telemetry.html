@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Patient Monitoring & AI Telemetry Bench | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js for real-time waveform rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">Live Patient Telemetry & Anomaly Testing Panel</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <main class="container">
+    <div class="page-title-block" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="page-title">Real-Time Patient Waveform & Vital Telemetry</h1>
+        <p class="page-desc">Live sub-second biomedical streaming with SciPy Butterworth digital filtering & local Phi-3 SLM triage.</p>
+      </div>
+
+      <!-- Test Controls Panel -->
+      <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="setSimMode('NORMAL')">Normal Sinus</button>
+        <button class="btn btn-secondary btn-sm" style="color: #F59E0B;" onclick="setSimMode('TACHYCARDIA')">Simulate Tachycardia</button>
+        <button class="btn btn-secondary btn-sm" style="color: #EF4444;" onclick="setSimMode('HYPOXIA')">Simulate Hypoxia</button>
+        <button class="btn btn-secondary btn-sm" style="color: #3B82F6;" onclick="setSimMode('BRADYCARDIA')">Simulate Bradycardia</button>
+        <button class="btn btn-secondary btn-sm" style="color: #8B5CF6;" onclick="setSimMode('ARRHYTHMIA')">Simulate Arrhythmia</button>
+      </div>
+    </div>
+
+    <!-- Live Vitals Banner -->
+    <div class="grid-3" style="margin-bottom: 1.25rem;">
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Heart Rate (AD8232 Sensor)</span>
+          <div class="vital-value" id="t-hr" style="color: #DC2626;">-- BPM</div>
+          <span class="badge badge-normal" id="t-hr-badge">Measuring...</span>
+        </div>
+        <div class="vital-icon red">♥</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Blood Oxygen (MAX30102 PPG)</span>
+          <div class="vital-value" id="t-spo2" style="color: #0284C7;">-- %</div>
+          <span class="badge badge-normal" id="t-spo2-badge">Measuring...</span>
+        </div>
+        <div class="vital-icon blue">O₂</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">DSP Signal Filtering Status</span>
+          <div class="vital-value" style="font-size: 1.1rem; color: #059669;" id="t-dsp">Butterworth Active</div>
+          <span class="badge badge-normal">0.5 - 40Hz Bandpass</span>
+        </div>
+        <div class="vital-icon green">⚡</div>
+      </div>
+    </div>
+
+    <!-- Waveforms Grid -->
+    <div class="grid-2" style="margin-bottom: 1.5rem;">
+      <!-- Chart 1: ECG Waveform (Raw vs Butterworth Filtered) -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">ECG Waveform (AD8232 Sensor - SciPy Butterworth Filter)</h3>
+          <span class="badge badge-normal">Raw vs Filtered</span>
+        </div>
+        <div style="position: relative; height: 240px;">
+          <canvas id="ecgChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: PPG Waveform (MAX30102 Blood Oxygen Pulse Wave) -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">PPG Waveform (MAX30102 Pulse Oximetry)</h3>
+          <span class="badge badge-normal">Pulse Wave</span>
+        </div>
+        <div style="position: relative; height: 240px;">
+          <canvas id="ppgChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Health Assessment Insight Box -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="card-header">
+        <h3 class="card-title">AI-Assisted Health Assessment (Local Quantized Phi-3 SLM)</h3>
+        <span class="badge badge-normal" id="slm-engine-badge">Phi-3 Edge Local</span>
+      </div>
+
+      <div id="slm-alert-box" class="alert-box">
+        <div class="alert-title" id="slm-diag-title">Normal Sinus Rhythm</div>
+        <div class="alert-desc" id="slm-diag-desc">Patient vitals are within standard physiological reference ranges (HR: 60-100 BPM, SpO2: 95-100%). No intervention required.</div>
+      </div>
+    </div>
+
+    <!-- Patient Alert & Incident History Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Patient Alert & Incident History</h3>
+        <button class="btn btn-secondary btn-sm" onclick="fetchTelemetryAlerts()">Refresh Database History</button>
+      </div>
+
+      <div class="table-container">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Patient ID</th>
+              <th>Severity</th>
+              <th>Diagnosis / Anomaly</th>
+              <th>Heart Rate</th>
+              <th>SpO₂</th>
+              <th>AI Assessment & Risk Explanation</th>
+            </tr>
+          </thead>
+          <tbody id="telemetry-alerts-tbody">
+            <tr><td colspan="7" style="text-align: center;">Loading persistent SQLite alert history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Real-Time Telemetry & AI Test Bench</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    let ecgChart, ppgChart;
+    let ws;
+    const maxDataPoints = 60;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initCharts();
+      connectWebSocket();
+      fetchTelemetryAlerts();
+    });
+
+    function initCharts() {
+      // ECG Chart Setup
+      const ctxECG = document.getElementById('ecgChart').getContext('2d');
+      ecgChart = new Chart(ctxECG, {
+        type: 'line',
+        data: {
+          labels: Array(maxDataPoints).fill(''),
+          datasets: [
+            {
+              label: 'Filtered ECG (Butterworth 0.5-40Hz)',
+              borderColor: '#0284C7',
+              borderWidth: 2,
+              data: Array(maxDataPoints).fill(0),
+              pointRadius: 0,
+              tension: 0.2
+            },
+            {
+              label: 'Raw Sensor Signal',
+              borderColor: '#CBD5E1',
+              borderWidth: 1,
+              data: Array(maxDataPoints).fill(0),
+              pointRadius: 0,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: { min: -1.5, max: 2.0, grid: { color: '#F1F5F9' } },
+            x: { display: false }
+          },
+          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }
+        }
+      });
+
+      // PPG Chart Setup
+      const ctxPPG = document.getElementById('ppgChart').getContext('2d');
+      ppgChart = new Chart(ctxPPG, {
+        type: 'line',
+        data: {
+          labels: Array(maxDataPoints).fill(''),
+          datasets: [{
+            label: 'PPG Signal (MAX30102)',
+            borderColor: '#EF4444',
+            borderWidth: 2,
+            data: Array(maxDataPoints).fill(0),
+            pointRadius: 0,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: { min: -0.5, max: 1.5, grid: { color: '#F1F5F9' } },
+            x: { display: false }
+          },
+          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }
+        }
+      });
+    }
+
+    function connectWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/telemetry`);
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        // Update vitals
+        document.getElementById("t-hr").innerText = `${data.heart_rate} BPM`;
+        document.getElementById("t-spo2").innerText = `${data.spo2}%`;
+
+        // Update waveform charts
+        if (data.filtered_ecg && data.filtered_ecg.length > 0) {
+          const valFiltered = data.filtered_ecg[data.filtered_ecg.length - 1];
+          const valRaw = data.raw_ecg[data.raw_ecg.length - 1];
+          const valPpg = data.ppg[data.ppg.length - 1];
+
+          ecgChart.data.datasets[0].data.push(valFiltered);
+          ecgChart.data.datasets[0].data.shift();
+          ecgChart.data.datasets[1].data.push(valRaw);
+          ecgChart.data.datasets[1].data.shift();
+          ecgChart.update();
+
+          ppgChart.data.datasets[0].data.push(valPpg);
+          ppgChart.data.datasets[0].data.shift();
+          ppgChart.update();
+        }
+
+        // Update SLM Insight Box
+        if (data.slm_eval) {
+          const evalData = data.slm_eval;
+          const box = document.getElementById("slm-alert-box");
+          document.getElementById("slm-diag-title").innerText = `${evalData.diagnosis} (${evalData.severity})`;
+          document.getElementById("slm-diag-desc").innerText = evalData.assessment;
+          document.getElementById("slm-engine-badge").innerText = evalData.slm_model;
+
+          if (evalData.severity === "CRITICAL") {
+            box.className = "alert-box critical";
+          } else if (evalData.severity === "WARNING") {
+            box.className = "alert-box warning";
+          } else {
+            box.className = "alert-box";
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWebSocket, 2000);
+      };
+    }
+
+    function setSimMode(mode) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ anomaly_mode: mode }));
+      }
+    }
+
+    async function fetchTelemetryAlerts() {
+      try {
+        const resp = await fetch("/api/alerts");
+        if (resp.ok) {
+          const alerts = await resp.json();
+          const tbody = document.getElementById("telemetry-alerts-tbody");
+          if (alerts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No persistent alerts recorded yet.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = alerts.map(a => `
+            <tr>
+              <td>${a.timestamp}</td>
+              <td><strong>${a.patient_id}</strong></td>
+              <td><span class="badge ${a.severity === 'CRITICAL' ? 'badge-critical' : (a.severity === 'WARNING' ? 'badge-warning' : 'badge-normal')}">${a.severity}</span></td>
+              <td><strong>${a.diagnosis}</strong></td>
+              <td>${a.heart_rate} BPM</td>
+              <td>${a.spo2}%</td>
+              <td style="font-size: 0.82rem;">${a.assessment}</td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) { console.error(err); }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Staff Login | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">IoT Healthcare & Patient Monitoring</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="auth-title">Hospital Staff Login</h2>
+        <p class="auth-subtitle">Access Admin, Doctor, Nurse, Compounder, or Reception portals</p>
+      </div>
+
+      <div id="error-alert" class="alert-box critical" style="display: none; padding: 0.65rem; margin-bottom: 1rem;">
+        <span id="error-msg" class="alert-desc" style="color: #DC2626; font-weight: 500;"></span>
+      </div>
+
+      <form id="staff-login-form">
+        <div class="form-group">
+          <label class="form-label" for="username_or_email">Email or Username</label>
+          <input type="text" id="username_or_email" class="form-control" placeholder="e.g. doctor@mededge.local" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div style="position: relative;">
+            <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 0.8rem; color: #0284C7; cursor: pointer;">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+          Sign In to Staff Portal
+        </button>
+      </form>
+
+      <!-- Quick Demo Login Credentials Selector -->
+      <div class="demo-accounts-box">
+        <strong style="color: #1E3A8A; display: block; margin-bottom: 0.35rem;">Quick Demo Login Accounts:</strong>
+        <div>
+          <span class="demo-btn" onclick="fillStaff('admin@mededge.local', 'admin123')">Admin</span>
+          <span class="demo-btn" onclick="fillStaff('doctor@mededge.local', 'doctor123')">Doctor</span>
+          <span class="demo-btn" onclick="fillStaff('nurse@mededge.local', 'nurse123')">Nurse</span>
+          <span class="demo-btn" onclick="fillStaff('compounder@mededge.local', 'compounder123')">Compounder</span>
+          <span class="demo-btn" onclick="fillStaff('reception@mededge.local', 'reception123')">Receptionist</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.25rem;">
+        <a href="/patient-login" style="font-size: 0.85rem; color: #0284C7; text-decoration: none;">Are you a patient? Login to Patient Portal &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Hospital Staff Portal</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById("password");
+      if (pwd.type === "password") pwd.type = "text";
+      else pwd.type = "password";
+    }
+
+    function fillStaff(email, pass) {
+      document.getElementById("username_or_email").value = email;
+      document.getElementById("password").value = pass;
+    }
+
+    document.getElementById("staff-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById("error-alert");
+      const errTxt = document.getElementById("error-msg");
+      errBox.style.display = "none";
+
+      const formData = new FormData();
+      formData.append("username_or_email", document.getElementById("username_or_email").value);
+      formData.append("password", document.getElementById("password").value);
+
+      try {
+        const resp = await fetch("/api/auth/login", {
+          method: "POST",
+          body: formData
+        });
+        const data = await resp.json();
+
+        if (resp.ok) {
+          localStorage.setItem("mededge_token", data.access_token);
+          localStorage.setItem("mededge_role", data.role);
+          localStorage.setItem("mededge_name", data.name);
+
+          // Redirect to role-specific dashboard
+          if (data.role === "ADMIN") window.location.href = "/admin";
+          else if (data.role === "DOCTOR") window.location.href = "/doctor";
+          else if (data.role === "NURSE") window.location.href = "/nurse";
+          else if (data.role === "COMPOUNDER") window.location.href = "/compounder";
+          else if (data.role === "RECEPTIONIST") window.location.href = "/reception";
+          else window.location.href = "/";
+        } else {
+          errTxt.innerText = data.detail || "Invalid email or password.";
+          errBox.style.display = "block";
+        }
+      } catch (err) {
+        errTxt.innerText = "Network error. Please try again.";
+        errBox.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

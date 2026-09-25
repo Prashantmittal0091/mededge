@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Portal Login | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">IoT Healthcare & Patient Monitoring</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <div class="auth-wrapper">
+    <div class="auth-card" style="border-top: 4px solid #0284C7;">
+      <div class="auth-header">
+        <h2 class="auth-title">Patient Portal Login</h2>
+        <p class="auth-subtitle">Access your personal health vitals, alerts, and medical records</p>
+      </div>
+
+      <div id="error-alert" class="alert-box critical" style="display: none; padding: 0.65rem; margin-bottom: 1rem;">
+        <span id="error-msg" class="alert-desc" style="color: #DC2626; font-weight: 500;"></span>
+      </div>
+
+      <form id="patient-login-form">
+        <div class="form-group">
+          <label class="form-label" for="patient_id_or_email">Patient ID or Email</label>
+          <input type="text" id="patient_id_or_email" class="form-control" placeholder="e.g. P-1001 or patient@mededge.local" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div style="position: relative;">
+            <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 0.8rem; color: #0284C7; cursor: pointer;">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem; background-color: #0284C7;">
+          Sign In to Patient Portal
+        </button>
+      </form>
+
+      <div class="demo-accounts-box">
+        <strong style="color: #1E3A8A; display: block; margin-bottom: 0.35rem;">Demo Patient Credentials:</strong>
+        <p style="font-size: 0.8rem; color: #475569;">
+          Patient ID / Email: <strong>P-1001</strong> or <strong>patient@mededge.local</strong><br>
+          Password: <strong>patient123</strong>
+        </p>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 0.5rem;" onclick="fillDemoPatient()">Auto-Fill Demo Credentials</button>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.25rem;">
+        <a href="/login" style="font-size: 0.85rem; color: #0284C7; text-decoration: none;">Are you hospital staff? Go to Staff Login &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Patient Telemetry Portal</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById("password");
+      if (pwd.type === "password") pwd.type = "text";
+      else pwd.type = "password";
+    }
+
+    function fillDemoPatient() {
+      document.getElementById("patient_id_or_email").value = "P-1001";
+      document.getElementById("password").value = "patient123";
+    }
+
+    document.getElementById("patient-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById("error-alert");
+      const errTxt = document.getElementById("error-msg");
+      errBox.style.display = "none";
+
+      const formData = new FormData();
+      formData.append("patient_id_or_email", document.getElementById("patient_id_or_email").value);
+      formData.append("password", document.getElementById("password").value);
+
+      try {
+        const resp = await fetch("/api/auth/patient-login", {
+          method: "POST",
+          body: formData
+        });
+        const data = await resp.json();
+
+        if (resp.ok) {
+          localStorage.setItem("mededge_token", data.access_token);
+          localStorage.setItem("mededge_role", data.role);
+          localStorage.setItem("mededge_name", data.name);
+          window.location.href = "/patient/dashboard";
+        } else {
+          errTxt.innerText = data.detail || "Invalid Patient ID/Email or password.";
+          errBox.style.display = "block";
+        }
+      } catch (err) {
+        errTxt.innerText = "Network connection failed. Please try again.";
+        errBox.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

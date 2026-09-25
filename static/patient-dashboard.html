@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Patient Portal | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">Patient Telemetry Portal</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <main class="container">
+    <div class="page-title-block" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 class="page-title">Welcome, <span id="pat-welcome-name">Patient</span></h1>
+        <p class="page-desc">Patient ID: <strong id="pat-id-badge" style="color: #0284C7;">P-1001</strong> | Continuous Vital Monitoring Active</p>
+      </div>
+      <span class="badge badge-normal" style="font-size: 0.9rem; padding: 0.4rem 0.85rem;">Live Health Stream: Active</span>
+    </div>
+
+    <!-- Health Overview Vitals Row -->
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+      <!-- Heart Rate -->
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Heart Rate</span>
+          <div class="vital-value" id="pat-hr" style="color: #DC2626;">72 BPM</div>
+          <span class="badge badge-normal" id="pat-hr-status">Normal sinus rhythm</span>
+        </div>
+        <div class="vital-icon red">♥</div>
+      </div>
+
+      <!-- Blood Oxygen -->
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Blood Oxygen (SpO₂)</span>
+          <div class="vital-value" id="pat-spo2" style="color: #0284C7;">98%</div>
+          <span class="badge badge-normal" id="pat-spo2-status">Optimal oxygenation</span>
+        </div>
+        <div class="vital-icon blue">O₂</div>
+      </div>
+
+      <!-- Overall Status -->
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Overall Monitoring Status</span>
+          <div class="vital-value" style="font-size: 1.35rem; color: #059669;">Stable</div>
+          <span class="badge badge-normal">No urgent alerts</span>
+        </div>
+        <div class="vital-icon green">✓</div>
+      </div>
+    </div>
+
+    <!-- Patient Main Grid: Health History & Profile -->
+    <div class="grid-2">
+      <!-- Section 1: Health & Medical Records -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Medical History & Prescriptions</h3>
+        </div>
+        <div id="pat-records-list">
+          <div style="padding: 0.85rem; border-bottom: 1px solid #E2E8F0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+              <strong style="color: #1E3A8A;">Dr. Ananya Sharma (Cardiology)</strong>
+              <span style="font-size: 0.78rem; color: #64748B;">2026-09-24</span>
+            </div>
+            <p style="font-size: 0.88rem; color: #1E293B; margin-bottom: 0.25rem;">
+              <strong>Diagnosis:</strong> Hypertension Management & Routine Telemetry Monitoring
+            </p>
+            <p style="font-size: 0.85rem; color: #0284C7;">
+              <strong>Prescription:</strong> Tab. Amlodipine 5mg (Once Daily), Tab. Aspirin 75mg
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Appointments & Profile Info -->
+      <div>
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div class="card-header">
+            <h3 class="card-title">Upcoming Appointments</h3>
+          </div>
+          <div id="pat-appointments-list">
+            <div style="padding: 0.85rem; background: #F8FAFC; border-radius: 6px; border: 1px solid #E2E8F0;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="color: #1E3A8A; display: block;">Dr. Ananya Sharma</strong>
+                  <span style="font-size: 0.82rem; color: #64748B;">Date: 2026-09-28 | Time: 10:30 AM</span>
+                </div>
+                <span class="badge badge-normal">SCHEDULED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">My Profile & Emergency Contact</h3>
+          </div>
+          <div style="font-size: 0.88rem; line-height: 1.8; color: #334155;">
+            <div><strong>Full Name:</strong> <span id="prof-name">Rajesh Sharma</span></div>
+            <div><strong>Age & Gender:</strong> <span id="prof-age-gender">48 Yrs / Male</span></div>
+            <div><strong>Contact Phone:</strong> <span id="prof-phone">+91 98765 43210</span></div>
+            <div><strong>Address:</strong> <span id="prof-address">Sector 62, Noida, Uttar Pradesh</span></div>
+            <div><strong>Emergency Contact:</strong> <span id="prof-emergency" style="color: #DC2626; font-weight: 600;">Sunita Sharma (+91 98765 43211)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Patient Health Portal</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const role = localStorage.getItem("mededge_role");
+      if (role !== "PATIENT" && role !== "ADMIN") {
+        alert("Access Denied: Patient Portal access required.");
+        window.location.href = "/patient-login";
+        return;
+      }
+      fetchPatientProfile();
+      initPatientWebSocket();
+    });
+
+    async function fetchPatientProfile() {
+      try {
+        const resp = await fetchApi("/api/auth/me");
+        if (resp.ok) {
+          const user = await resp.json();
+          document.getElementById("pat-welcome-name").innerText = user.name;
+          document.getElementById("prof-name").innerText = user.name;
+
+          if (user.patient_profile) {
+            const p = user.patient_profile;
+            document.getElementById("pat-id-badge").innerText = p.patient_id;
+            document.getElementById("prof-age-gender").innerText = `${p.age} Yrs / ${p.gender}`;
+            document.getElementById("prof-phone").innerText = p.phone || "N/A";
+            document.getElementById("prof-address").innerText = p.address || "N/A";
+            document.getElementById("prof-emergency").innerText = p.emergency_contact || "N/A";
+          }
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    function initPatientWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/telemetry`);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        document.getElementById("pat-hr").innerText = `${data.heart_rate} BPM`;
+        document.getElementById("pat-spo2").innerText = `${data.spo2}%`;
+      };
+    }
+  </script>
+</body>
+</html>

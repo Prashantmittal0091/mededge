@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nurse Station | MedEdge Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">+</div>
+      <div class="brand-text-group">
+        <span class="brand-title">MedEdge Intelligence</span>
+        <span class="brand-subtitle">Nurse Station & Ward Vitals Monitor</span>
+      </div>
+    </a>
+    <ul class="nav-links" id="nav-actions"></ul>
+  </header>
+
+  <main class="container">
+    <div class="page-title-block">
+      <h1 class="page-title">Nurse Ward Telemetry Station</h1>
+      <p class="page-desc">Monitor live patient vitals, emergency triage alerts, and log nursing observations.</p>
+    </div>
+
+    <!-- Ward Overview Cards -->
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Active Monitored Patient</span>
+          <div class="vital-value" style="font-size: 1.25rem;">Rajesh Sharma (P-1001)</div>
+          <span class="badge badge-normal">Bed #104 (ICU Telemetry)</span>
+        </div>
+        <div class="vital-icon blue">🏥</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">Heart Rate (AD8232)</span>
+          <div class="vital-value" id="nurse-hr" style="color: #DC2626;">74 BPM</div>
+          <span class="badge badge-normal">Sinus Rhythm</span>
+        </div>
+        <div class="vital-icon red">♥</div>
+      </div>
+
+      <div class="card vital-card">
+        <div>
+          <span class="vital-label">SpO₂ Pulse Oximetry</span>
+          <div class="vital-value" id="nurse-spo2" style="color: #0284C7;">98%</div>
+          <span class="badge badge-normal">Normal Oxygenation</span>
+        </div>
+        <div class="vital-icon blue">O₂</div>
+      </div>
+    </div>
+
+    <!-- Active Incident Queue -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="card-header">
+        <h3 class="card-title">Live Triage Alert Queue</h3>
+        <a href="/telemetry" class="btn btn-primary btn-sm">Open Sensor Waveforms &rarr;</a>
+      </div>
+      <div class="table-container">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Patient</th>
+              <th>Severity</th>
+              <th>Diagnosis / Anomaly</th>
+              <th>Heart Rate</th>
+              <th>SpO₂</th>
+              <th>AI Triage Note</th>
+            </tr>
+          </thead>
+          <tbody id="nurse-alerts-tbody">
+            <tr><td colspan="7" style="text-align: center;">Loading alert queue...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>MedEdge Intelligence &copy; 2026 | Nurse Ward Station</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const role = localStorage.getItem("mededge_role");
+      if (role !== "NURSE" && role !== "ADMIN" && role !== "DOCTOR") {
+        alert("Access Denied: Nurse privileges required.");
+        window.location.href = "/login";
+        return;
+      }
+      initNurseWebSocket();
+      fetchNurseAlerts();
+    });
+
+    function initNurseWebSocket() {
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/telemetry`);
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        document.getElementById("nurse-hr").innerText = `${data.heart_rate} BPM`;
+        document.getElementById("nurse-spo2").innerText = `${data.spo2}%`;
+      };
+    }
+
+    async function fetchNurseAlerts() {
+      const resp = await fetchApi("/api/alerts");
+      if (resp.ok) {
+        const alerts = await resp.json();
+        const tbody = document.getElementById("nurse-alerts-tbody");
+        if (alerts.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No active alerts logged.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = alerts.map(a => `
+          <tr>
+            <td>${a.timestamp}</td>
+            <td><strong>${a.patient_id}</strong></td>
+            <td><span class="badge ${a.severity === 'CRITICAL' ? 'badge-critical' : (a.severity === 'WARNING' ? 'badge-warning' : 'badge-normal')}">${a.severity}</span></td>
+            <td><strong>${a.diagnosis}</strong></td>
+            <td>${a.heart_rate} BPM</td>
+            <td>${a.spo2}%</td>
+            <td style="font-size: 0.82rem;">${a.assessment}</td>
+          </tr>
+        `).join("");
+      }
+    }
+  </script>
+</body>
+</html>
