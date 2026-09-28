@@ -53,13 +53,15 @@ def get_db():
 
 def init_db():
     """Initializes tables and seeds default demo accounts if not present."""
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-
     try:
-        # Check if users exist
-        if db.query(User).count() == 0:
-            print("[INFO] Seeding MedEdge Intelligence Demo Accounts...")
+        print("[INFO] Initializing MedEdge database and tables...")
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+
+        try:
+            # Check if users exist
+            if db.query(User).count() == 0:
+                print("[INFO] Seeding MedEdge Intelligence Demo Accounts...")
 
             # 1. Admin Account
             admin_user = User(
@@ -224,5 +226,7 @@ def init_db():
             db.commit()
 
             print("[SUCCESS] MedEdge Intelligence Database Initialized & Seeded!")
-    finally:
-        db.close()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[WARNING] Database initialization deferred: {e}")
