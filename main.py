@@ -59,10 +59,12 @@ def health_check():
     }
 
 
-# Initialize database on startup
+import threading
+
+# Initialize database in background thread on startup (non-blocking for instant cloud health checks)
 @app.on_event("startup")
 def startup_event():
-    init_db()
+    threading.Thread(target=init_db, daemon=True).start()
 
 
 # WebSocket Connection Manager for Real-Time Telemetry Streaming
@@ -545,3 +547,13 @@ def page_patient_dashboard():
 @app.get("/telemetry", response_class=HTMLResponse)
 def page_telemetry():
     return FileResponse(os.path.join(STATIC_DIR, "telemetry.html"))
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port_env = os.getenv("PORT", "8000")
+    try:
+        port = int(port_env)
+    except ValueError:
+        port = 8000
+    uvicorn.run(app, host="0.0.0.0", port=port)
