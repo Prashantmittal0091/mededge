@@ -7,7 +7,11 @@ with NumPy synthetic data fallback and scipy.signal Butterworth filtering.
 import time
 import math
 import numpy as np
-from scipy import signal
+try:
+    from scipy import signal
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
 
 # Optional hardware imports (wrapped in try-except for Pi/ESP32 compatibility)
 try:
@@ -26,15 +30,16 @@ class ButterworthFilter:
         self.highcut = highcut
         self.order = order
 
-        # Design Butterworth bandpass filter
-        nyquist = 0.5 * sample_rate
-        low = lowcut / nyquist
-        high = highcut / nyquist
-        self.b, self.a = signal.butter(order, [low, high], btype='bandpass')
+        if HAS_SCIPY:
+            # Design Butterworth bandpass filter
+            nyquist = 0.5 * sample_rate
+            low = lowcut / nyquist
+            high = highcut / nyquist
+            self.b, self.a = signal.butter(order, [low, high], btype='bandpass')
 
     def filter_signal(self, raw_data):
         """Applies zero-phase digital filtering using scipy.signal.filtfilt."""
-        if len(raw_data) < 15:
+        if not HAS_SCIPY or len(raw_data) < 15:
             return list(raw_data)
         
         raw_arr = np.array(raw_data, dtype=float)
